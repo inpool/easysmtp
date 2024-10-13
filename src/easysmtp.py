@@ -88,7 +88,7 @@ class Attachment:
         self.name = name or self.file.name
         self.mime_type = mime_type or mimetypes.guess_type(self.file)[0]
 
-    def mime_application(self):
+    def _as_mime_part(self):
         with self.file.open("rb") as f:
             name = Header(self.name).encode()
             cid = Header(self.cid).encode()
@@ -184,7 +184,7 @@ class EasySMTP:
                         attachment = Attachment(**attachment)
                     else:
                         attachment = Attachment(attachment)
-                msg.attach(attachment.mime_application())
+                msg.attach(attachment._as_mime_part())
 
         elif html_body:
             msg = MIMEText(html_body, "html", "utf-8")
