@@ -1,35 +1,9 @@
 """
-Usage:
+This module provides a simple interface to send emails using SMTP.
 
-```
-from easysmtp import EasySMTP
-
-
-from_addr = 'user@gmail.com'
-smtp_username = from_addr # SMTP login username. It's usually your email address.
-smtp_password = 'password'
-
-smtp = EasySMTP()
-smtp.config(from_addr,
-            username=smtp_username,
-            password=smtp_password,)
-
-to_addr = 'to@gmail.com'
-subject = 'Hello'
-
-# Send a plain text email
-smtp.send_mail(from_addr, to_addr, subject, body='Hello world!')
-
-# Send an HTML email
-smtp.send_mail(from_addr, to_addr, subject, html_body='<h1>Hello world!</h1>')
-
-# Send an email with attachments
-smtp.send_mail(from_addr, to_addr, subject, body='Hello world!', attachments=['README.md'])
-
-# Send an email with embedded images
-html_body = '<p>Hello world!</p><img src="cid:logo.png">'
-smtp.send_mail(from_addr, to_addr, subject, html_body=html_body, images=['logo.png'])
-```
+It contains 2 main classes:
+- EasySMTP: A class that provides a simple interface to send emails using SMTP.
+- Attachment: A class that represents an email attachment.
 """
 
 import json
@@ -41,7 +15,10 @@ from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from pathlib import Path
-from typing import Dict, List, Literal, TypedDict
+from typing import Dict, List, Literal, Optional, Tuple, TypeAlias, TypedDict, Union
+
+AttachmentList: TypeAlias = List["Attachment", str, Path, Tuple, List, Dict[str, Union[str, Path]]]
+SMTPSecurity: TypeAlias = Literal["ssl", "starttls", ""]
 
 
 class SMTPServerConfig(TypedDict):
@@ -100,6 +77,12 @@ class Attachment:
     """
 
     def __init__(self, path: str, cid: str = None, name=None, mime_type=None):
+        """
+        :param path: path of the file to be attached
+        :param cid: optional. the content id used in html, default is the basename of the path
+        :param name: optional. the name of the attachment, default is the basename of the path
+        :param mime_type: optional. the mime type of the file, default is guessed from the extension
+        """
         self.file = Path(path)
         self.cid = cid or self.file.name
         self.name = name or self.file.name
@@ -119,9 +102,20 @@ class EasySMTP:
     def __init__(self):
         self._config: Dict[str, SMTPConfig] = {}
 
-    def config(
-        self, mail_addr, username, password, host=None, port=None, security: Literal["ssl", "starttls", "", None] = None
-    ):
+    def config(self, mail_addr, username, password, host=None, port=None, security: Optional[SMTPSecurity] = None):
+        """
+        Configure sender account infomation.
+
+        :param mail_addr: sender email address
+        :param username: username for smtp login
+        :param password: password for smtp login
+        :param host: smtp host.
+        :param port: smtp port.
+        :param security: security protocol. valid values: "ssl", "starttls" or ""
+
+        If domain of mail_addr is built in supported by this library, host, port and security can be omitted.
+        Anyway, you can override them.
+        """
         cfg = {"username": username, "password": password}
 
         mail_host = mail_addr.split("@")[1]
@@ -203,8 +197,27 @@ class EasySMTP:
         return msg
 
     def send_mail(
-        self, from_addr, to_addr_or_list, subject, *, body=None, html_body=None, attachments: List[str] | None = None
+        self,
+        from_addr,
+        to_addr_or_list,
+        subject,
+        *,
+        body=None,
+        html_body=None,
+        attachments: Optional[AttachmentList] = None,
     ):
+        """
+        :param from_addr: the sender email address.
+        :param to_addr_or_list: the recipient email address or list of addresses.
+        :param subject: the subject of the email.
+        :param body: keyword only. the body of the email.
+        :param html_body: keyword only. the html body of the email. if present, body will be ignored.
+        :param attachments: keyword only. list of attachments. Each item can be of one of the following:
+            - Attachment instance
+            - path to file, str or Path instance
+            - argument list for Attachment class
+            - keyword argument dict for Attachment class
+        """
         if from_addr not in self._config:
             raise ValueError(f"Sender Account for {from_addr} not configured!")
         to_addr_list = [to_addr_or_list] if isinstance(to_addr_or_list, str) else to_addr_or_list
