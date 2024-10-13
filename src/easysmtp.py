@@ -17,7 +17,7 @@ from email.mime.text import MIMEText
 from pathlib import Path
 from typing import Dict, List, Literal, Optional, Tuple, TypeAlias, TypedDict, Union
 
-AttachmentList: TypeAlias = List["Attachment", str, Path, Tuple, List, Dict[str, Union[str, Path]]]
+AttachmentList: TypeAlias = List[Union["Attachment", str, Path, Tuple, List, Dict[str, Union[str, Path]]]]
 SMTPSecurity: TypeAlias = Literal["ssl", "starttls", ""]
 
 
@@ -113,7 +113,7 @@ class EasySMTP:
         :param port: smtp port.
         :param security: security protocol. valid values: "ssl", "starttls" or ""
 
-        If domain of mail_addr is built in supported by this library, host, port and security can be omitted.
+        `host`, `port` and `security` can be omitted if domain of mail_addr is built in supported by this library.
         Anyway, you can override them.
         """
         cfg = {"username": username, "password": password}
@@ -213,6 +213,7 @@ class EasySMTP:
         :param body: keyword only. the body of the email.
         :param html_body: keyword only. the html body of the email. if present, body will be ignored.
         :param attachments: keyword only. list of attachments. Each item can be of one of the following:
+
             - Attachment instance
             - path to file, str or Path instance
             - argument list for Attachment class
