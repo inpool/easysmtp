@@ -20,6 +20,8 @@ from typing import Dict, List, Literal, Optional, Tuple, TypeAlias, TypedDict, U
 AttachmentList: TypeAlias = List[Union["Attachment", str, Path, Tuple, List, Dict[str, Union[str, Path]]]]
 SMTPSecurity: TypeAlias = Literal["ssl", "starttls", ""]
 
+__all__ = ["Attachment", "EasySMTP"]
+
 
 class SMTPServerConfig(TypedDict):
     host: str
@@ -78,10 +80,11 @@ class Attachment:
 
     def __init__(self, path: str, cid: str = None, name=None, mime_type=None):
         """
-        :param path: path of the file to be attached
-        :param cid: optional. the content id used in html, default is the basename of the path
-        :param name: optional. the name of the attachment, default is the basename of the path
-        :param mime_type: optional. the mime type of the file, default is guessed from the extension
+        Args:
+            path: path of the file to be attached
+            cid: optional. the content id used in html, default is the basename of the path
+            name: optional. the name of the attachment, default is the basename of the path
+            mime_type: optional. the mime type of the file, default is guessed from the extension
         """
         self.file = Path(path)
         self.cid = cid or self.file.name
@@ -106,15 +109,16 @@ class EasySMTP:
         """
         Configure sender account infomation.
 
-        :param mail_addr: sender email address
-        :param username: username for smtp login
-        :param password: password for smtp login
-        :param host: smtp host.
-        :param port: smtp port.
-        :param security: security protocol. valid values: "ssl", "starttls" or ""
+        Args:
+            mail_addr: sender email address
+            username: username for smtp login
+            password: password for smtp login
+            host: smtp host.
+            port: smtp port.
+            security: security protocol. valid values: "ssl", "starttls" or ""
 
-        `host`, `port` and `security` can be omitted if domain of mail_addr is built in supported by this library.
-        Anyway, you can override them.
+                `host`, `port` and `security` can be omitted if domain of mail_addr is built in supported by this library.
+                Anyway, you can override them.
         """
         cfg = {"username": username, "password": password}
 
@@ -207,17 +211,17 @@ class EasySMTP:
         attachments: Optional[AttachmentList] = None,
     ):
         """
-        :param from_addr: the sender email address.
-        :param to_addr_or_list: the recipient email address or list of addresses.
-        :param subject: the subject of the email.
-        :param body: keyword only. the body of the email.
-        :param html_body: keyword only. the html body of the email. if present, body will be ignored.
-        :param attachments: keyword only. list of attachments. Each item can be of one of the following:
-
-            - Attachment instance
-            - path to file, str or Path instance
-            - argument list for Attachment class
-            - keyword argument dict for Attachment class
+        Args:
+            from_addr: the sender email address.
+            to_addr_or_list: the recipient email address or list of addresses.
+            subject: the subject of the email.
+            body: keyword only. the body of the email.
+            html_body: keyword only. the html body of the email. if present, body will be ignored.
+            attachments: keyword only. list of attachments. Each item can be of one of the following:
+                - Attachment instance
+                - path to file, str or Path instance
+                - argument list for Attachment class
+                - keyword argument dict for Attachment class
         """
         if from_addr not in self._config:
             raise ValueError(f"Sender Account for {from_addr} not configured!")
